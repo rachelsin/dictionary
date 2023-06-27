@@ -1,0 +1,22 @@
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres:podopodo770@localhost:5432/rachel"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model DictionaryEntry {
+  id        Int      @id @default(autoincrement())
+  english   String
+  translations Translation[]
+}
+
+model Translation {
+  id             Int             @id @default(autoincrement())
+  language       String
+  translation    String
+  dictionaryEntry DictionaryEntry  @relation(fields: [dictionaryEntryId], references: [id])
+  dictionaryEntryId Int
+}
