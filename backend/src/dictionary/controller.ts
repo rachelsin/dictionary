@@ -6,20 +6,27 @@ import { supportedLanguages } from '../config/supportedLanguages';
 const createDictionaryEntry = async (req: Request, res: Response): Promise<void> => {
     try {
         const { english, translations } = req.body;
+        console.log(english, translations);
 
         const unsupportedLanguages = translations
             .map((translation: { language: string; }) => translation.language.toLowerCase())
-            .filter((language:string) => !supportedLanguages.includes(language));
+            .filter((language: string) => !supportedLanguages.includes(language));
+
+        console.log('ddsss', unsupportedLanguages);
 
         if (unsupportedLanguages.length > 0) {
             res.status(400).send(`Unsupported languages: ${unsupportedLanguages.join(', ')}`);
+            console.log('status 400');
+            
             return;
         }
 
         const result = await createDictionaryEntryWithTranslations(english, translations);
 
         if (result) {
-            res.json(result);
+            res.status(200).send(result);
+            console.log('yyyy');
+            
         } else {
             res.status(500).send('Error creating DictionaryEntry');
         }
@@ -57,9 +64,9 @@ const createDictionaryEntryWithTranslations = async (
 
 
 
-const getTranslationByLanguage = async (req: Request, res: Response): Promise<void> => {    
+const getTranslationByLanguage = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { language, word } = req.params;        
+        const { language, word } = req.params;
 
         if (!supportedLanguages.includes(language.toLowerCase())) {
             res.status(400).send(`Unsupported language: ${language}`);
