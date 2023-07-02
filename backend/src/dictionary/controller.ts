@@ -1,12 +1,16 @@
 import { Request, Response } from 'express';
 import { supportedLanguages } from '../config/supportedLanguages';
 import dictionaryService from './service';
-
+import dictionaryDto from './dto';
 
 const createDictionaryEntry = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { english, translations } = req.body;
-        
+        const { error, value } = dictionaryDto.schemaCreateDictionaryEntry.validate(req.body);
+        if (error) {
+            res.status(400).send(error.details[0].message);
+            return;
+        }
+        const { english, translations } = value;
         const unsupportedLanguages = translations
             .map((translation: { language: string; }) => translation.language.toLowerCase())
             .filter((language: string) => !supportedLanguages.includes(language));
@@ -30,7 +34,12 @@ const createDictionaryEntry = async (req: Request, res: Response): Promise<void>
 
 const getTranslationByLanguage = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { language, word } = req.params;
+        const { error, value } = dictionaryDto.schemaTranslate.validate(req.params);
+        if (error) {
+            res.status(400).send(error.details[0].message);
+            return;
+        }
+        const { language, word } = value;
         if (!supportedLanguages.includes(language.toLowerCase())) {
             res.status(400).send(`Unsupported language: ${language}`);
             return;
