@@ -36,7 +36,7 @@ git clone https://github.com/rachelsin/dictionary.git
   
 7. Start the frontend development server:
 - npm start
-- 
+
 8. Access the application in your browser at http://localhost:3000.
 
 ## Usage
