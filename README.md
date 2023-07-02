@@ -8,12 +8,13 @@ Supported languages for translations include: Spanish, French, German, Italian, 
 ## Technologies Used
 Node.js
 React
-Redux
 PostgreSQL
 Express.js
 Prisma
 Axios
 Joi
+Redux
+
 ## Installation
 
 1. Clone the repository:
@@ -26,7 +27,9 @@ Joi
 3. Create a PostgreSQL database and update the database connection details in the .env file.
 
 4. Run database migrations to create the necessary tables:
+- npx prisma generate
 - npx prisma migrate dev --name init
+- npx prisma db push
   
 5. Start the backend server:
 - npm start
