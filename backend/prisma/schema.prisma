@@ -8,15 +8,17 @@ generator client {
 }
 
 model DictionaryEntry {
-  id        Int      @id @default(autoincrement())
-  english   String
+  id           Int           @id @default(autoincrement())
+  english      String        @unique
   translations Translation[]
 }
 
 model Translation {
-  id             Int             @id @default(autoincrement())
-  language       String
-  translation    String
-  dictionaryEntry DictionaryEntry  @relation(fields: [dictionaryEntryId], references: [id])
+  id                Int             @id @default(autoincrement())
+  language          String
+  translation       String
+  dictionaryEntry   DictionaryEntry @relation(fields: [dictionaryEntryId], references: [id])
   dictionaryEntryId Int
+
+  @@unique([dictionaryEntryId, language])
 }

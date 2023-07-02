@@ -1,6 +1,4 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import type { PayloadAction } from '@reduxjs/toolkit'
-import { RootState } from './store'
 import axios from 'axios'
 
 interface CreateTranslateState {
@@ -18,7 +16,7 @@ const initialState: CreateTranslateState = {
 export const createTranslate = createAsyncThunk(
     'createTranslate/createTranslateBywordAndLanguage',
     async (data: { english: string, translations: { language: string, translation: string }[] }) => {
-        const res = await axios.post('http://localhost:9000/dictionary/dictionary-entry', data);
+        const res = await axios.post('http://localhost:9000/dictionary/dictionaryEntry', data);
         const result = await res.data
         return result;
     }
@@ -26,7 +24,7 @@ export const createTranslate = createAsyncThunk(
 
 
 export const translateSlice = createSlice({
-    name: 'translate',
+    name: 'createTranslate',
     initialState,
     reducers: {},
     extraReducers: (builder) => {
@@ -40,14 +38,8 @@ export const translateSlice = createSlice({
         builder.addCase(createTranslate.rejected, (state, action) => {
             state.loading = false
             state.success = false
-            state.error = action.error.message
         })
     },
 })
-
-// export const { increment, decrement, incrementByAmount } = translateSlice.actions
-
-// Other code such as selectors can use the imported `RootState` type
-export const selectCount = (state: RootState) => state.counter.value
 
 export default translateSlice.reducer

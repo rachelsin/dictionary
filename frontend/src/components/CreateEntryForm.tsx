@@ -1,118 +1,182 @@
-import React, { useState } from 'react';
-import { createEntry } from '../api/api';
+import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from './../store/hooks'
-import { createTranslate } from '../store/createTranslateSlice';
+import { createTranslate } from '../store/slice/createTranslateSlice';
+import { getSupportedLanguages } from '../store/slice/translateSlice';
+import { Form } from 'react-bootstrap';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import * as yup from 'yup';
+import { yupResolver } from "@hookform/resolvers/yup";
+import { toast } from 'react-toastify';
 
 interface Translation {
     language: string;
     translation: string;
 }
 
+interface FormData {
+    english: string;
+    translations: Translation[];
+}
+
 const CreateEntryForm: React.FC = () => {
-    const dispatch = useAppDispatch()
+    const dispatch = useAppDispatch();
 
-    const [english, setEnglish] = useState('');
-    const [translations, setTranslations] = useState<Translation[]>([]);
+    const validationSchema = yup.object().shape({
+        english: yup.string().required('English Word is required'),
+        translations: yup
+            .array()
+            .of(
+                yup.object().shape({
+                    language: yup.string().required('Language is required'),
+                    translation: yup.string().required('Translation is required'),
+                })
+            )
+            .required('At least one translation is required.'),
+    });
 
-    const handleEnglishChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setEnglish(event.target.value);
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting, isDirty, isValid },
+        setValue,
+        control,
+    } = useForm<FormData>({
+        mode: "onChange",
+        resolver: yupResolver(validationSchema),
+        defaultValues: {
+            english: '',
+            translations: [{ language: '', translation: '' }],
+        },
+    });
+
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: 'translations',
+    });
+
+    useEffect(() => {
+        dispatch(getSupportedLanguages())
+    }, []);
+
+    const supportedLanguages = useAppSelector((state) => state.translation.supportedLanguages)
+    const success = useAppSelector((state) => state.createTranslate.success)
+    const error = useAppSelector((state) => state.createTranslate.error)
+
+    const selectedLanguages = fields.map((field) => field.language);
+
+    const getAvailableLanguages = (index: number) => {
+        const selectedLanguagesExceptIndex = selectedLanguages.filter((language, i) => i !== index);
+        return supportedLanguages.filter((language) => !selectedLanguagesExceptIndex.includes(language));
     };
 
-    const handleTranslationChange = (
-        event: React.ChangeEvent<HTMLInputElement>,
-        index: number
-    ) => {
-        const updatedTranslations = [...translations];
-        updatedTranslations[index] = {
-            ...updatedTranslations[index],
-            translation: event.target.value,
-        };
-        setTranslations(updatedTranslations);
+
+    const onSubmit = (data: FormData) => {
+        dispatch(createTranslate(data));
     };
 
-    const handleLanguageChange = (
-        event: React.ChangeEvent<HTMLInputElement>,
-        index: number
-    ) => {
-        const updatedTranslations = [...translations];
-        updatedTranslations[index] = {
-            ...updatedTranslations[index],
-            language: event.target.value,
-        };
-        setTranslations(updatedTranslations);
-    };
+    useEffect(() => {
+        if (success) {
+            toast.success('Entry created successfully!');
 
-    const handleAddTranslation = () => {
-        setTranslations([...translations, { language: '', translation: '' }]);
-    };
+        } else if (success === false && success !== null) {
+            toast.error('Error creating entry');
+        }
+    }, [success])
 
-    const handleRemoveTranslation = (index: number) => {
-        const updatedTranslations = [...translations];
-        updatedTranslations.splice(index, 1);
-        setTranslations(updatedTranslations);
-    };
-
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        const formData = {
-                english,
-                translations,
-            };
-        dispatch(createTranslate(formData))
-        // try {
-        //     const formData = {
-        //         english,
-        //         translations,
-        //     };
-        //     const response = await createEntry(formData).then(res=>console.log('s',res) );
-        //     // console.log('hi', response);
-
-        // } catch (error) {
-        //     // Handle any error that occurred during the API call
-        // }
-    };
 
     return (
-        <div>
-            <h2>Create Dictionary Entry</h2>
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="englishInput">English Word:</label>
-                    <input
-                        type="text"
-                        id="englishInput"
-                        value={english}
-                        onChange={handleEnglishChange}
-                    />
+        <div className='m-5'>
+            <h2 className='display-6'>Create Dictionary Entry</h2>
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <div className='row'>
+                    <div className='col-7'>
+                        <label htmlFor="englishInput">English Word:</label>
+                        <Controller
+                            name="english"
+                            control={control}
+                            defaultValue=""
+                            render={({ field }) => (
+                                <input
+                                    className={`form-control my-2 ${errors.english ? 'is-invalid' : ''}`}
+                                    type="text"
+                                    id="englishInput"
+                                    {...field}
+                                />
+                            )}
+                        />
+                        {errors.english && (
+                            <div className='invalid-feedback'>{errors.english.message}</div>
+                        )}
+                    </div>
                 </div>
                 <div>
-                    <h3>Translations:</h3>
-                    {translations.map((translation, index) => (
-                        <div key={index}>
-                            <label htmlFor={`translationLanguageInput-${index}`}>Language:</label>
-                            <input
-                                type="text"
-                                id={`translationLanguageInput-${index}`}
-                                value={translation.language}
-                                onChange={(event) => handleLanguageChange(event, index)}
-                            />
-                            <label htmlFor={`translationInput-${index}`}>Translation:</label>
-                            <input
-                                type="text"
-                                id={`translationInput-${index}`}
-                                value={translation.translation}
-                                onChange={(event) => handleTranslationChange(event, index)}
-                            />
-                            <button type="button" onClick={() => handleRemoveTranslation(index)}>
-                                Remove Translation
-                            </button>
+                    <p className=''>Translations:</p>
+                    {fields.length === 0 ? (
+                        <div className='error-massage text-danger'>At least one translation is required.</div>
+                    ) : ''}
+                    {fields.map((field, index) => (
+                        <div key={field.id}>
+                            <div className="row mb-3">
+                                <div className='col'>
+                                    <Controller
+                                        name={`translations.${index}.language`}
+                                        control={control}
+                                        defaultValue=""
+                                        render={({ field }) => (
+                                            <Form.Select
+                                                id={`translationLanguageInput-${index}`}
+                                                aria-label='Default select example'
+                                                {...field}
+                                                className={`form-control ${errors.translations && errors.translations[index]?.language ? 'is-invalid' : ''}`}
+                                            >
+                                                <option value=''>Language</option>
+                                                {getAvailableLanguages(index).map((language) => (
+                                                    <option key={language} value={language}>
+                                                        {language.charAt(0).toUpperCase() + language.slice(1)}
+                                                    </option>
+                                                ))}
+                                            </Form.Select>
+                                        )}
+                                    />
+
+                                    {errors.translations && errors.translations[index]?.language && (
+                                        <>
+                                            {console.log((errors.translations[index]?.language as any)?.message)}
+                                            <div className='invalid-feedback'>{(errors.translations[index]?.language as any)?.message}</div>
+                                        </>
+                                    )}
+                                </div>
+                                <div className='col'>
+                                    <Controller
+                                        name={`translations.${index}.translation`}
+                                        control={control}
+                                        defaultValue=""
+                                        render={({ field }) => (
+                                            <input
+                                                className={`form-control ${errors.translations && errors.translations[index]?.translation ? 'is-invalid' : ''}`}
+                                                placeholder='Translation:'
+                                                type='text'
+                                                {...field}
+                                            />
+                                        )}
+                                    />
+                                    {errors.translations && errors.translations[index]?.translation && (
+                                        <div className='invalid-feedback'>{(errors.translations[index]?.translation as any)?.message}</div>
+                                    )}
+                                </div>
+                                <div className='col-1'>
+                                    <i className='bi bi-trash3 bigIcon' onClick={() => remove(index)}></i>
+                                </div>
+                            </div>
                         </div>
                     ))}
-                    <button type="button" onClick={handleAddTranslation}>
+                </div>
+                <div className='mt-4'>
+                    <button type="button" className='btn btn-secondary' onClick={() => append({ language: '', translation: '' })}>
                         Add Translation
                     </button>
+                    <button type="submit" className='btn btn-success mx-3' disabled={fields.length === 0}>Create Entry</button>
                 </div>
-                <button type="submit">Create Entry</button>
             </form>
         </div>
     );
