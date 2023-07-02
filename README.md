@@ -8,6 +8,7 @@ Supported languages for translations include: Spanish, French, German, Italian, 
 ## Technologies Used
 Node.js
 React
+Redux
 PostgreSQL
 Express.js
 Prisma
@@ -16,7 +17,7 @@ Joi
 ## Installation
 
 1. Clone the repository:
-git clone https://github.com/rachelsin/dictionary.git
+- git clone https://github.com/rachelsin/dictionary.git
 
 2. Navigate to the backend directory and install the dependencies:
 - cd backend
@@ -49,8 +50,3 @@ Create Dictionary Entry:
 Click on the "Create Entry" button to navigate to the create entry form.
 Enter the English word and provide translations for multiple languages.
 Click the "Create Entry" button to save the dictionary entry.
-## Contributing
-Contributions to the Dictionary Application are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request.
-
-# License
-The Dictionary Application is open source and released under the MIT License.
