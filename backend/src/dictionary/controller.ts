@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { supportedLanguages } from '../config/supportedLanguages';
 import dictionaryService from './service';
 import dictionaryDto from './dto';
+import { Translation } from '@prisma/client';
 
 const createDictionaryEntry = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -10,14 +11,21 @@ const createDictionaryEntry = async (req: Request, res: Response): Promise<void>
             res.status(400).send(error.details[0].message);
             return;
         }
-        const { english, translations } = value;
+        let { english, translations } = value;
+
+        english = english.toLowerCase();
+
+        translations = translations.map((translation: Translation) => ({
+            language: translation.language.toLowerCase(),
+            translation: translation.translation.toLowerCase(),
+        }));
+
         const unsupportedLanguages = translations
-            .map((translation: { language: string; }) => translation.language.toLowerCase())
+            .map((translation: { language: string }) => translation.language.toLowerCase())
             .filter((language: string) => !supportedLanguages.includes(language));
         if (unsupportedLanguages.length > 0) {
             res.status(400).send(`Unsupported languages: ${unsupportedLanguages.join(', ')}`);
             console.log('status 400');
-
             return;
         }
         const result = await dictionaryService.createDictionaryEntryWithTranslations(english, translations);
@@ -32,6 +40,7 @@ const createDictionaryEntry = async (req: Request, res: Response): Promise<void>
     }
 };
 
+
 const getTranslationByLanguage = async (req: Request, res: Response): Promise<void> => {
     try {
         const { error, value } = dictionaryDto.schemaTranslate.validate(req.params);
@@ -44,7 +53,9 @@ const getTranslationByLanguage = async (req: Request, res: Response): Promise<vo
             res.status(400).send(`Unsupported language: ${language}`);
             return;
         }
-        const translation = await dictionaryService.retrieveTranslationByLanguage(language, word);
+        const lowercaseWord = word.toLowerCase();
+
+        const translation = await dictionaryService.retrieveTranslationByLanguage(language, lowercaseWord);
         if (translation) {
             res.json(translation);
         } else {
@@ -55,6 +66,7 @@ const getTranslationByLanguage = async (req: Request, res: Response): Promise<vo
         res.status(500).send('Error in getTranslationByLanguage');
     }
 };
+
 
 const getSupportedLanguages = async (req: Request, res: Response): Promise<void> => {
     try {

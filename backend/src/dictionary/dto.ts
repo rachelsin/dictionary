@@ -12,6 +12,7 @@ const schemaCreateDictionaryEntry = Joi.object({
         )
         .required()
 });
+
 const schemaTranslate = Joi.object({
     language: Joi.string().valid(...supportedLanguages).required(),
     word: Joi.string().required(),
