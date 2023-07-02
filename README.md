@@ -8,12 +8,13 @@ Supported languages for translations include: Spanish, French, German, Italian, 
 ## Technologies Used
 Node.js
 React
-Redux
 PostgreSQL
 Express.js
 Prisma
 Axios
 Joi
+Redux
+
 ## Installation
 
 1. Clone the repository:
